@@ -115,4 +115,11 @@ function Meta({ label, value }) {
   );
 }
 
+function Loader() {
+  return (
+    <div style={styles.loader}>
+      Loading analysis…
+    </div>
+  );
+}
 
