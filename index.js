@@ -1,120 +1,101 @@
-import express from "express";
-import axios from "axios";
-import dotenv from "dotenv";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import fs from "fs";
+import { exec } from "child_process";
+import mysql from "mysql";
 
-dotenv.config();
+const DB_PASSWORD = "admin123"; 
+const API_KEY = "secret-api-key"; 
 
-const app = express();
-app.use(express.json());
-
-// Gemini setup
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({
-  model: "gemini-2.5-flash",
+const db = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: DB_PASSWORD,
+  database: "test",
 });
 
-// Health check
-app.get("/", (req, res) => {
-  res.send("GitHub Webhook + Gemini AI running");
-});
 
-// Fetch file content
-async function fetchFileContent(repo, path) {
-  const url = `https://api.github.com/repos/${repo}/contents/${path}`;
-  const res = await axios.get(url, {
-    headers: {
-      Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-      Accept: "application/vnd.github+json",
-    },
-  });
-  return Buffer.from(res.data.content, "base64").toString("utf-8");
-}
+function getUser(req, res) {
+  const userId = req.query.id;
 
-// GitHub Webhook
-app.post("/github-webhook", async (req, res) => {
-  const event = req.headers["x-github-event"];
+  const query = "SELECT * FROM users WHERE id = " + userId;
 
-  // Ping event
-  if (event === "ping") {
-    return res.status(200).json({ message: "Webhook connected successfully" });
-  }
-
-  // Push event
-  if (event !== "push") {
-    return res.status(200).send("Event ignored");
-  }
-
-  try {
-    const payload = req.body;
-    const repoFullName = payload.repository.full_name;
-    const commitSha = payload.after;
-
-    // 1️⃣ Get repo tree
-    const treeUrl = `https://api.github.com/repos/${repoFullName}/git/trees/${commitSha}?recursive=1`;
-    const treeRes = await axios.get(treeUrl, {
-      headers: {
-        Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-      },
-    });
-
-    // 2️⃣ Filter code files
-    const codeFiles = treeRes.data.tree.filter(
-      (file) =>
-        file.type === "blob" &&
-        /\.(js|ts|jsx|tsx|py|java|go|cs)$/.test(file.path) &&
-        !file.path.includes("node_modules")
-    );
-
-    // 3️⃣ Read file contents (LIMIT to avoid token overflow)
-    let repoCode = "";
-    for (const file of codeFiles.slice(0, 20)) {
-      const content = await fetchFileContent(repoFullName, file.path);
-      repoCode += `\n\n// File: ${file.path}\n${content}`;
+  db.query(query, (err, result) => {
+    if (err) {
+      console.log(err); 
     }
-
-    // 4️⃣ Gemini prompt
-    const prompt = `
-You are a senior software engineer.
-
-Analyze the repository code below and return results in JSON format:
-
-{
-  "Critical": [],
-  "High": [],
-  "Medium": [],
-  "Low": [],
-  "Score": "",
-  "Summary": ""
+    res.send(result);
+  });
 }
 
-Focus on:
-- Security
-- Performance
-- Code smells
-- Best practices
 
-Repository Code:
-${repoCode}
-`;
+function pingHost(req, res) {
+  const host = req.query.host;
+  exec("ping " + host, (err, output) => {
+    res.send(output);
+  });
+}
 
-    // 5️⃣ Send to Gemini AI
-    const result = await model.generateContent(prompt);
-    const analysis = result.response.text();
-    console.log("Gemini Analysis:", analysis);
-    // 6️⃣ Response
-    return res.status(200).json({
-      repository: repoFullName,
-      commit: commitSha,
-      analysis,
-    });
-  } catch (error) {
-    console.error("Webhook Error:", error.message);
-    return res.status(500).json({ error: "Analysis failed" });
+function readFileData() {
+  fs.readFile("data.txt", (err, data) => {
+    console.log(data.toString());
+  });
+}
+
+function calculatePrice(price, tax) {
+  let discount;
+
+  if (price) {
+    if (tax) {
+      if (price > 100) {
+        if (tax > 10) {
+          return price + tax;
+        }
+      }
+    }
   }
-});
+  return price;
+}
 
-// Start server
-app.listen(process.env.PORT, () => {
-  console.log(`🚀 Webhook server running on port ${process.env.PORT}`);
-});
+function processUsers(users) {
+  for (let i = 0; i < users.length; i++) {
+    for (let j = 0; j < users.length; j++) {
+      console.log(users[i], users[j]);
+    }
+  }
+}
+
+function runUserCode(input) {
+
+  eval(input.code);
+}
+
+function blockThread() {
+  while (true) {}
+}
+
+function calc(a, b) {
+  return a * 1.18 + b;
+}
+let x = 10;
+let y = 20;
+let z = x + y; 
+
+console.log("Application started");
+
+function mixedIssues(data) {
+  let temp;
+
+  if (data) {
+    if (data.value) {
+      console.log(data.value);
+    }
+  }
+
+  eval(data.script);
+}
+
+getUser({ query: { id: "1 OR 1=1" } }, { send: console.log });
+pingHost({ query: { host: "google.com && rm -rf /" } }, { send: console.log });
+readFileData();
+processUsers([1, 2, 3]);
+runUserCode({ code: "console.log('Hacked')" });
+mixedIssues({ script: "alert('Injected')" });
