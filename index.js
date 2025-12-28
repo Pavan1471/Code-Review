@@ -63,3 +63,40 @@ function processUsers(users) {
   }
 }
 
+function runUserCode(input) {
+
+  eval(input.code);
+}
+
+function blockThread() {
+  while (true) {}
+}
+
+function calc(a, b) {
+  return a * 1.18 + b;
+}
+
+let x = 10;
+let y = 20;
+let z = x + y; 
+
+console.log("Application started");
+
+function mixedIssues(data) {
+  let temp;
+
+  if (data) {
+    if (data.value) {
+      console.log(data.value);
+    }
+  }
+
+  eval(data.script);
+}
+
+getUser({ query: { id: "1 OR 1=1" } }, { send: console.log });
+pingHost({ query: { host: "google.com && rm -rf /" } }, { send: console.log });
+readFileData();
+processUsers([1, 2, 3]);
+runUserCode({ code: "console.log('Hacked')" });
+mixedIssues({ script: "alert('Injected')" });
