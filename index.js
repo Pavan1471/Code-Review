@@ -123,13 +123,3 @@ function Loader() {
   );
 }
 
-/* ---------------- LOGIC ---------------- */
-
-function calculateScore(m) {
-  if (!m) return 0;
-  return Math.max(
-    100 - (m.Critical * 10 + m.High * 5 + m.Medium * 2 + m.Low),
-    0
-  );
-}
-
