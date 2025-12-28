@@ -106,4 +106,14 @@ function StatCard({ title, value, color }) {
   );
 }
 
+function Meta({ label, value }) {
+  return (
+    <div style={styles.metaRow}>
+      <span style={styles.metaLabel}>{label}</span>
+      <span style={styles.metaValue}>{value}</span>
+    </div>
+  );
+}
+
+
 
